@@ -1,0 +1,51 @@
+# .clang-format
+
+BasedOnStyle: WebKit
+
+IndentWidth: 8
+TabWidth: 8
+UseTab: Always
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterControlStatement: false
+  AfterFunction: false
+  AfterClass: false
+  AfterEnum: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+ColumnLimit: 88
+PenaltyExcessCharacter: 5
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: WithoutElse
+
+AlignAfterOpenBracket: DontAlign
+AlignOperands: false
+AlignTrailingComments: false
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: All
+ContinuationIndentWidth: 8
+
+PointerAlignment: Right
+
+SortIncludes: false
+IncludeBlocks: Preserve
+
+IndentCaseLabels: false
+IndentGotoLabels: false
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpaceAfterCStyleCast: true
+Cpp11BracedListStyle: false
