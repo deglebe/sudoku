@@ -38,14 +38,58 @@ static bool MouseToBoardCoords(int mouseX, int mouseY, int *row, int *col) {
 	return true;
 }
 
+static int MouseToColorIndex(int mouseX, int mouseY) {
+	/* calculate color keypad position - must match UI_DrawSidebar exactly */
+	int keypadX = BOARD_PAD + TILE_PIX * BOARD_SIZE + SIDEBAR_MARGIN;
+	/* Start: TOPBAR_H + BOARD_PAD
+	 * + CONTROLS_SECTION_SPACING (after "controls:")
+	 * + CONTROLS_LINE_SPACING * 5 (5 control lines)
+	 * + CONTROLS_SECTION_SPACING + 8 (after last control)
+	 * + CONTROLS_SECTION_SPACING (after "color palette:")
+	 */
+	int keypadY = TOPBAR_H + BOARD_PAD + CONTROLS_SECTION_SPACING * 3 
+		+ CONTROLS_LINE_SPACING * 5 + 8;
+
+	/* check each color button */
+	for (int i = 1; i < CELL_COLOR_COUNT; i++) {
+		int row = (i - 1) / COLOR_KEYPAD_COLS;
+		int col = (i - 1) % COLOR_KEYPAD_COLS;
+		int px = keypadX + col * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+		int py = keypadY + row * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+
+		if (mouseX >= px && mouseX < px + COLOR_KEYPAD_SIZE
+			&& mouseY >= py && mouseY < py + COLOR_KEYPAD_SIZE) {
+			return i;
+		}
+	}
+
+	return 0; /* no color selected */
+}
+
 void Input_Update(Game *g) {
-	/* mouse input for cell selection */
+	/* mouse input for cell selection and color keypad */
 	if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 		Vector2 mousePos = GetMousePosition();
 		int row, col;
 		if (MouseToBoardCoords((int) mousePos.x, (int) mousePos.y, &row, &col)) {
 			g->selRow = row;
 			g->selCol = col;
+		}
+		else {
+			/* check if clicking on color keypad */
+			int colorIdx = MouseToColorIndex((int) mousePos.x, (int) mousePos.y);
+			if (colorIdx > 0) {
+				Cell *cell = &g->board.cells[g->selRow][g->selCol];
+				/* toggle color: if same color is already on cell, remove it */
+				if (cell->color == colorIdx) {
+					cell->color = 0;
+					g->selectedColorIndex = 0;
+				}
+				else {
+					cell->color = (uint8_t) colorIdx;
+					g->selectedColorIndex = colorIdx;
+				}
+			}
 		}
 	}
 

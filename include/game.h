@@ -31,6 +31,7 @@ typedef struct Game {
 	InputMode inputMode;
 	bool highlightConflicts;
 	char puzzleTitle[MAX_PUZZLE_TITLE_GAME];
+	int selectedColorIndex; /* 0 = none, 1-9 = color palette */
 
 	int menuSelection;
 	int difficultySelection;

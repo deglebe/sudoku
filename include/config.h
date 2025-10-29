@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 #define APP_TITLE "sudoku"
-#define APP_VERSION "0.0.1"
+#define APP_VERSION "0.0.2"
 
 /* grid defs */
 #define BOARD_SIZE 9
@@ -38,6 +38,9 @@
 #define SIDEBAR_MARGIN 16
 #define CONTROLS_LINE_SPACING 22
 #define CONTROLS_SECTION_SPACING 28
+#define COLOR_KEYPAD_SIZE 32
+#define COLOR_KEYPAD_SPACING 8
+#define COLOR_KEYPAD_COLS 3
 
 /* font sizes */
 #define FONT_SIZE_TITLE 48
@@ -54,6 +57,21 @@
 #define NOTE_PADDING_X 6
 #define NOTE_PADDING_Y 4
 #define NOTE_GRID_SIZE 3
+
+/* cell color palette */
+typedef enum CellColor {
+	CELL_COLOR_NONE = 0,
+	CELL_COLOR_RED = 1,
+	CELL_COLOR_ORANGE = 2,
+	CELL_COLOR_YELLOW = 3,
+	CELL_COLOR_GREEN = 4,
+	CELL_COLOR_BLUE = 5,
+	CELL_COLOR_INDIGO = 6,
+	CELL_COLOR_VIOLET = 7,
+	CELL_COLOR_LIGHT_GRAY = 8,
+	CELL_COLOR_WHITE = 9,
+	CELL_COLOR_COUNT = 10
+} CellColor;
 
 /* input mode */
 typedef enum InputMode { INPUT_MODE_INSERT = 0, INPUT_MODE_NOTES = 1 } InputMode;
@@ -86,6 +104,17 @@ typedef enum Difficulty {
 #define COLOR_HIGHLIGHT_ROW_COL 0x2B5CFF15
 #define COLOR_HIGHLIGHT_DIGIT 0xFFD70025
 
+/* cell color palette colors (semi-transparent backgrounds) */
+#define COLOR_PALETTE_RED 0xFF6B6B80
+#define COLOR_PALETTE_ORANGE 0xFFA50080
+#define COLOR_PALETTE_YELLOW 0xFFEB3B80
+#define COLOR_PALETTE_GREEN 0x4CAF5080
+#define COLOR_PALETTE_BLUE 0x2196F380
+#define COLOR_PALETTE_INDIGO 0x3F51B580
+#define COLOR_PALETTE_VIOLET 0x9C27B080
+#define COLOR_PALETTE_LIGHT_GRAY 0xBDBDBD80
+#define COLOR_PALETTE_WHITE 0xFFFFFF80
+
 /* forward decl for theme */
 typedef struct Theme {
 	unsigned int bg;
@@ -100,6 +129,7 @@ typedef struct Theme {
 	unsigned int bad;
 	unsigned int highlightRowCol;
 	unsigned int highlightDigit;
+	unsigned int cellColors[CELL_COLOR_COUNT];
 } Theme;
 
 #endif // CONFIG_H

@@ -13,11 +13,15 @@ classic sudoku.
     - currently only corner markings, no centre markings (TODO)
 - column/row/digit highlighting
 - arrow key and mouse movement
+- cell coloring with 9-color palette
+    - red, orange, yellow, green, blue, indigo, violet, light gray, white
+    - click color buttons in sidebar to apply to selected cell
+    - clicking same color removes it from the cell
 
 ## todo:
 
 - centre markings
-- cell colouring
+- number completion tracking
 - difficulty rating
     - maybe implement a se calculator + some bespoke rating
 - modding
