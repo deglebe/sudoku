@@ -1,0 +1,102 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'        # Trigger when pushing version tags like v1.0.0
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      
+      - name: Set up Raylib (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential wget tar zip \
+            libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev
+          wget https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_linux_amd64.tar.gz
+          tar -xzf raylib-5.5_linux_amd64.tar.gz
+          mv raylib-5.5_linux_amd64 raylib-linux
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          make clean || true
+          make CC=gcc INCS="-Iinclude -Iraylib-linux/include" \
+               LIBS="-Lraylib-linux/lib -l:libraylib.a -lm -lpthread -ldl -lrt -lX11 -lXrandr -lXi -lXcursor -lXinerama -lGL"
+          mkdir -p dist
+          cp sudoku dist/sudoku
+          cp README.md LICENSE dist/ || true
+          cd dist && zip -r ../sudoku-linux.zip *
+
+      - name: Set up MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            wget
+            unzip
+            zip
+          msystem: MINGW64
+
+      - name: Download Raylib (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          wget https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_win64_mingw-w64.zip
+          unzip raylib-5.5_win64_mingw-w64.zip -d raylib-win
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          mingw32-make clean || true
+          mingw32-make CC=gcc INCS="-Iinclude -Iraylib-win/raylib-5.5_win64_mingw-w64/include" \
+                        LIBS="-Lraylib-win/raylib-5.5_win64_mingw-w64/lib -l:libraylib.a -lopengl32 -lgdi32 -lwinmm"
+          mkdir -p dist
+          cp sudoku.exe dist/sudoku.exe || cp sudoku dist/sudoku.exe
+          cp raylib-win/raylib-5.5_win64_mingw-w64/lib/raylib.dll dist/
+          cp README.md LICENSE dist/ || true
+          cd dist && zip -r ../sudoku-win64.zip *
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sudoku-${{ matrix.os }}
+          path: |
+            sudoku-linux.zip
+            sudoku-win64.zip
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: List downloaded artifacts
+        run: ls -R dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/**/sudoku-linux.zip
+            dist/**/sudoku-win64.zip
