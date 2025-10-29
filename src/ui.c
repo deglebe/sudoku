@@ -24,6 +24,7 @@ typedef struct ThemeColors {
 	Color bad;
 	Color highlightRowCol;
 	Color highlightDigit;
+	Color cellColors[CELL_COLOR_COUNT];
 } ThemeColors;
 
 /* a bit forward thinking: conversion of a theme to cached color
@@ -42,6 +43,9 @@ static ThemeColors CacheThemeColors(const Theme *theme) {
 		.bad = ColorFromUInt(theme->bad),
 		.highlightRowCol = ColorFromUInt(theme->highlightRowCol),
 		.highlightDigit = ColorFromUInt(theme->highlightDigit) };
+	for (int i = 0; i < CELL_COLOR_COUNT; i++) {
+		colors.cellColors[i] = ColorFromUInt(theme->cellColors[i]);
+	}
 	return colors;
 }
 
@@ -74,7 +78,19 @@ Theme Theme_Default(void) {
 		.text = COLOR_TEXT,
 		.bad = COLOR_BAD,
 		.highlightRowCol = COLOR_HIGHLIGHT_ROW_COL,
-		.highlightDigit = COLOR_HIGHLIGHT_DIGIT };
+		.highlightDigit = COLOR_HIGHLIGHT_DIGIT,
+		.cellColors = {
+			0, // CELL_COLOR_NONE
+			COLOR_PALETTE_RED,
+			COLOR_PALETTE_ORANGE,
+			COLOR_PALETTE_YELLOW,
+			COLOR_PALETTE_GREEN,
+			COLOR_PALETTE_BLUE,
+			COLOR_PALETTE_INDIGO,
+			COLOR_PALETTE_VIOLET,
+			COLOR_PALETTE_LIGHT_GRAY,
+			COLOR_PALETTE_WHITE
+		} };
 	return t;
 }
 
@@ -210,6 +226,11 @@ void UI_DrawBoard(const Game *g) {
 
 			const Cell *cellData = &g->board.cells[row][col];
 
+			/* draw cell color if set */
+			if (cellData->color > 0 && cellData->color < CELL_COLOR_COUNT) {
+				DrawRectangleRec(cell, colors.cellColors[cellData->color]);
+			}
+
 			/*  highlight row and column of selected cell */
 			if (g->selRow == row || g->selCol == col) {
 				DrawRectangleRec(cell, colors.highlightRowCol);
@@ -260,9 +281,36 @@ void UI_DrawSidebar(const Game *g) {
 	y += CONTROLS_LINE_SPACING;
 
 	DrawText("esc: menu", x, y, FONT_SIZE_NORMAL, colors.text);
+	y += CONTROLS_SECTION_SPACING + 8;
+
+	/* Draw color keypad */
+	DrawText("color palette:", x, y, FONT_SIZE_LARGE, colors.text);
 	y += CONTROLS_SECTION_SPACING;
 
+	for (int i = 1; i < CELL_COLOR_COUNT; i++) {
+		int row = (i - 1) / COLOR_KEYPAD_COLS;
+		int col = (i - 1) % COLOR_KEYPAD_COLS;
+		int px = x + col * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+		int py = y + row * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+
+		Rectangle colorRect = { px, py, COLOR_KEYPAD_SIZE, COLOR_KEYPAD_SIZE };
+		DrawRectangleRec(colorRect, colors.cellColors[i]);
+		DrawRectangleLinesEx(colorRect, 2, colors.grid);
+
+		/* highlight selected color */
+		if (g->selectedColorIndex == i) {
+			DrawRectangleLinesEx(colorRect, 3, colors.accent);
+		}
+	}
+
+	y += ((CELL_COLOR_COUNT - 2) / COLOR_KEYPAD_COLS + 1) * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+	y += CONTROLS_SECTION_SPACING;
+
+	/* reserve space for second keypad */
+	DrawText("numbers: (wip)", x, y, FONT_SIZE_NORMAL, ColorAlpha(colors.text, 0.5f));
+
 	if (Board_IsComplete(&g->board)) {
+		y += CONTROLS_SECTION_SPACING;
 		DrawText("solved!", x, y, FONT_SIZE_HEADING, colors.accent);
 	}
 }

@@ -19,6 +19,7 @@ void Game_Init(Game *g) {
 	g->selCol = 0;
 	g->inputMode = INPUT_MODE_INSERT;
 	g->highlightConflicts = true;
+	g->selectedColorIndex = 0;
 	strcpy(g->puzzleTitle, "Sudoku");
 
 	/* menu state */

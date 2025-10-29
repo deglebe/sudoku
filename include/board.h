@@ -14,6 +14,7 @@ typedef struct Cell {
 	uint8_t value; /* 0 for empty, 1-9 for digit */
 	bool given; /* true if part of puzzle */
 	uint16_t notes; /* bitmask 1<<n for note n (1..9) */
+	uint8_t color; /* CellColor enum value for cell highlighting */
 } Cell;
 
 typedef struct Board {
