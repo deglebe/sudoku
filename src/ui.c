@@ -177,8 +177,14 @@ static void DrawCellContent(Rectangle cell,
 void UI_DrawTopBar(const Game *g) {
 	DrawRectangle(0, 0, WINDOW_W, TOPBAR_H, ColorFromUInt(COLOR_TOPBAR_BG));
 
-	const char *title = (g->screen == SCREEN_PLAY) ? g->puzzleTitle
-						       : APP_TITLE "  " APP_VERSION;
+	static char defaultTitle[128];
+	const char *title;
+	if (g->screen == SCREEN_PLAY) {
+		title = g->puzzleTitle;
+	} else {
+		snprintf(defaultTitle, sizeof(defaultTitle), "%s  %s", APP_TITLE, APP_VERSION);
+		title = defaultTitle;
+	}
 	DrawText(title,
 		TOPBAR_PADDING,
 		TOPBAR_PADDING,

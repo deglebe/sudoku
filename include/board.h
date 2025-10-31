@@ -18,7 +18,7 @@ typedef struct Cell {
 } Cell;
 
 typedef struct Board {
-	Cell cells[BOARD_SIZE][BOARD_SIZE];
+	Cell cells[BOARD_SIZE_MAX][BOARD_SIZE_MAX];
 } Board;
 
 void Board_Clear(Board *b);

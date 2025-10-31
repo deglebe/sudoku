@@ -15,6 +15,9 @@ int main(void) {
 	/* seed rng */
 	srand((unsigned int) time(NULL));
 
+	/* initialize config from Lua */
+	Config_Init();
+
 	SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
 	InitWindow(WINDOW_W, WINDOW_H, APP_TITLE);
 	SetTargetFPS(60);

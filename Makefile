@@ -1,7 +1,7 @@
 CC	:= cc
 CFLAGS	:= -std=c99 -O2 -Wall -Wextra -Werror=implicit-function-declaration
 INCS	:= -Iinclude
-SRCS	:= src/main.c src/game.c src/board.c src/input.c src/ui.c src/puzzle_loader.c src/generator.c
+SRCS	:= src/main.c src/game.c src/board.c src/input.c src/ui.c src/puzzle_loader.c src/generator.c src/config.c
 OBJS	:= $(SRCS:.c=.o)
 
 LIBS	:= -lraylib -lm -lpthread -ldl -lrt -lX11
