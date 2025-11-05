@@ -13,12 +13,16 @@
 /* helper function to safely convert unsigned int color to Color struct */
 Color ColorFromUInt(unsigned int c);
 
+/* forward declare internal type */
+typedef struct ThemeColors ThemeColors;
+
 /* drawing helpers */
 void UI_DrawTopBar(const Game *g);
 void UI_DrawBoard(const Game *g);
-void UI_DrawSidebar(const Game *g);
+void UI_DrawSidebar(const Game *g, const ThemeColors *colors);
 void UI_DrawDifficultyMenu(Game *g);
 void UI_DrawLoadPuzzleMenu(Game *g);
+void UI_DrawSettingsMenu(Game *g);
 
 /* menu helpers */
 int UI_Menu(const char *const *items, int count, int *selected);

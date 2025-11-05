@@ -9,9 +9,7 @@
 #include "generator.h"
 
 void Board_Clear(Board *b) {
-	for (int r = 0; r < BOARD_SIZE; r++)
-		for (int c = 0; c < BOARD_SIZE; c++)
-			b->cells[r][c] = (Cell) { 0 };
+	memset(b->cells, 0, sizeof(b->cells));
 }
 
 void Board_FromString(Board *b, const char *s) {
@@ -29,15 +27,22 @@ void Board_FromString(Board *b, const char *s) {
 
 bool Board_IsValidMove(const Board *b, int r, int c, int v) {
 	if (v < 1 || v > 9) return false;
+
+	/* check row and column simultaneously */
 	for (int i = 0; i < BOARD_SIZE; i++) {
 		if (i != c && b->cells[r][i].value == v) return false;
 		if (i != r && b->cells[i][c].value == v) return false;
 	}
-	int r0 = (r / SUBGRID) * SUBGRID, c0 = (c / SUBGRID) * SUBGRID;
-	for (int rr = r0; rr < r0 + SUBGRID; rr++)
-		for (int cc = c0; cc < c0 + SUBGRID; cc++)
-			if (!(rr == r && cc == c) && b->cells[rr][cc].value == v)
+
+	/* check subgrid */
+	int r0 = (r / SUBGRID) * SUBGRID;
+	int c0 = (c / SUBGRID) * SUBGRID;
+	for (int rr = r0; rr < r0 + SUBGRID; rr++) {
+		for (int cc = c0; cc < c0 + SUBGRID; cc++) {
+			if ((rr != r || cc != c) && b->cells[rr][cc].value == v)
 				return false;
+		}
+	}
 	return true;
 }
 
@@ -63,17 +68,13 @@ void Board_ClearNotesAffectedBy(Board *b, int r, int c, int v) {
 
 	unsigned int noteBit = 1u << v;
 
-	/* clear notes in the same row */
-	for (int col = 0; col < BOARD_SIZE; col++) {
-		b->cells[r][col].notes &= ~noteBit;
+	/* clear notes in the same row and column simultaneously */
+	for (int i = 0; i < BOARD_SIZE; i++) {
+		b->cells[r][i].notes &= ~noteBit;
+		b->cells[i][c].notes &= ~noteBit;
 	}
 
-	/* clear notes in the same column */
-	for (int row = 0; row < BOARD_SIZE; row++) {
-		b->cells[row][c].notes &= ~noteBit;
-	}
-
-	/* clear notes in the same subgrid */
+	/* clear notes in the same subgrid (some cells already cleared above) */
 	int r0 = (r / SUBGRID) * SUBGRID;
 	int c0 = (c / SUBGRID) * SUBGRID;
 	for (int row = r0; row < r0 + SUBGRID; row++) {

@@ -24,6 +24,11 @@ typedef struct ThemeColors {
 	Color bad;
 	Color highlightRowCol;
 	Color highlightDigit;
+	Color topbarBg;
+	Color topbarText;
+	Color menuText;
+	Color menuSel;
+	Color menuSelBg;
 	Color cellColors[CELL_COLOR_COUNT];
 } ThemeColors;
 
@@ -42,7 +47,12 @@ static ThemeColors CacheThemeColors(const Theme *theme) {
 		.text = ColorFromUInt(theme->text),
 		.bad = ColorFromUInt(theme->bad),
 		.highlightRowCol = ColorFromUInt(theme->highlightRowCol),
-		.highlightDigit = ColorFromUInt(theme->highlightDigit) };
+		.highlightDigit = ColorFromUInt(theme->highlightDigit),
+		.topbarBg = ColorFromUInt(theme->topbarBg),
+		.topbarText = ColorFromUInt(theme->topbarText),
+		.menuText = ColorFromUInt(theme->menuText),
+		.menuSel = ColorFromUInt(theme->menuSel),
+		.menuSelBg = ColorFromUInt(theme->menuSelBg) };
 	for (int i = 0; i < CELL_COLOR_COUNT; i++) {
 		colors.cellColors[i] = ColorFromUInt(theme->cellColors[i]);
 	}
@@ -79,8 +89,7 @@ Theme Theme_Default(void) {
 		.bad = COLOR_BAD,
 		.highlightRowCol = COLOR_HIGHLIGHT_ROW_COL,
 		.highlightDigit = COLOR_HIGHLIGHT_DIGIT,
-		.cellColors = {
-			0, // CELL_COLOR_NONE
+		.cellColors = { 0, // CELL_COLOR_NONE
 			COLOR_PALETTE_RED,
 			COLOR_PALETTE_ORANGE,
 			COLOR_PALETTE_YELLOW,
@@ -89,26 +98,27 @@ Theme Theme_Default(void) {
 			COLOR_PALETTE_INDIGO,
 			COLOR_PALETTE_VIOLET,
 			COLOR_PALETTE_LIGHT_GRAY,
-			COLOR_PALETTE_WHITE
-		} };
+			COLOR_PALETTE_WHITE } };
 	return t;
 }
 
 /* grid line consistency */
-static void DrawGridLines(Rectangle boardRect, Color gridColor) {
+static void DrawGridLines(Rectangle boardRect, const ThemeColors *colors) {
 	for (int i = 0; i <= BOARD_SIZE; i++) {
 		int x = boardRect.x + i * TILE_PIX;
 		int y = boardRect.y + i * TILE_PIX;
 
-		/* 3x3 subgrids */
-		int thickness = (i % SUBGRID == 0) ? GRID_LINE_THICK_B : GRID_LINE_THICK;
+		/* 3x3 subgrids use bold lines and bold color */
+		bool isBold = (i % SUBGRID == 0);
+		int thickness = isBold ? GRID_LINE_THICK_B : GRID_LINE_THICK;
+		Color lineColor = isBold ? colors->gridBold : colors->grid;
 
 		/* vert line */
 		DrawRectangle(
-			x - thickness / 2, boardRect.y, thickness, boardRect.height, gridColor);
+			x - thickness / 2, boardRect.y, thickness, boardRect.height, lineColor);
 		/* horiz line */
 		DrawRectangle(
-			boardRect.x, y - thickness / 2, boardRect.width, thickness, gridColor);
+			boardRect.x, y - thickness / 2, boardRect.width, thickness, lineColor);
 	}
 }
 
@@ -181,7 +191,8 @@ void UI_DrawTopBar(const Game *g) {
 	const char *title;
 	if (g->screen == SCREEN_PLAY) {
 		title = g->puzzleTitle;
-	} else {
+	}
+	else {
 		snprintf(defaultTitle, sizeof(defaultTitle), "%s  %s", APP_TITLE, APP_VERSION);
 		title = defaultTitle;
 	}
@@ -216,7 +227,7 @@ void UI_DrawBoard(const Game *g) {
 
 	DrawRectangleRec(boardRect, colors.cellBg);
 
-	DrawGridLines(boardRect, colors.grid);
+	DrawGridLines(boardRect, &colors);
 
 	/* get the value of the selected cell for digit highlighting */
 	const Cell *selectedCell = &g->board.cells[g->selRow][g->selCol];
@@ -255,42 +266,43 @@ void UI_DrawBoard(const Game *g) {
 			DrawCellContent(cell, cellData, row, col, g, &colors);
 		}
 	}
+
+	/* draw sidebar (shares color cache) */
+	UI_DrawSidebar(g, &colors);
 }
 
 /* draw the sidebar with controls and status */
-void UI_DrawSidebar(const Game *g) {
+void UI_DrawSidebar(const Game *g, const ThemeColors *colors) {
 	int x = BOARD_PAD + TILE_PIX * BOARD_SIZE + SIDEBAR_MARGIN;
 	int y = TOPBAR_H + BOARD_PAD;
 
-	ThemeColors colors = CacheThemeColors(&g->theme);
-
-	DrawText("controls:", x, y, FONT_SIZE_LARGE, colors.text);
+	DrawText("controls:", x, y, FONT_SIZE_LARGE, colors->text);
 	y += CONTROLS_SECTION_SPACING;
 
 	/*  Draw control instructions */
-	DrawText("arrows: move", x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText("arrows: move", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
 	const char *digitAction = g->inputMode == INPUT_MODE_INSERT
 		? "1-9: set digit"
 		: "1-9: toggle note";
-	DrawText(digitAction, x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText(digitAction, x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
-	DrawText("0 / backspace: clear", x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText("0 / backspace: clear", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
-	DrawText("n: toggle mode", x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText("n: toggle mode", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
-	DrawText("h: highlight conflicts", x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText("h: highlight conflicts", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
-	DrawText("esc: menu", x, y, FONT_SIZE_NORMAL, colors.text);
+	DrawText("esc: menu", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_SECTION_SPACING + 8;
 
 	/* Draw color keypad */
-	DrawText("color palette:", x, y, FONT_SIZE_LARGE, colors.text);
+	DrawText("color palette:", x, y, FONT_SIZE_LARGE, colors->text);
 	y += CONTROLS_SECTION_SPACING;
 
 	for (int i = 1; i < CELL_COLOR_COUNT; i++) {
@@ -300,24 +312,25 @@ void UI_DrawSidebar(const Game *g) {
 		int py = y + row * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
 
 		Rectangle colorRect = { px, py, COLOR_KEYPAD_SIZE, COLOR_KEYPAD_SIZE };
-		DrawRectangleRec(colorRect, colors.cellColors[i]);
-		DrawRectangleLinesEx(colorRect, 2, colors.grid);
+		DrawRectangleRec(colorRect, colors->cellColors[i]);
+		DrawRectangleLinesEx(colorRect, 2, colors->grid);
 
 		/* highlight selected color */
 		if (g->selectedColorIndex == i) {
-			DrawRectangleLinesEx(colorRect, 3, colors.accent);
+			DrawRectangleLinesEx(colorRect, 3, colors->accent);
 		}
 	}
 
-	y += ((CELL_COLOR_COUNT - 2) / COLOR_KEYPAD_COLS + 1) * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
+	y += ((CELL_COLOR_COUNT - 2) / COLOR_KEYPAD_COLS + 1)
+		* (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
 	y += CONTROLS_SECTION_SPACING;
 
 	/* reserve space for second keypad */
-	DrawText("numbers: (wip)", x, y, FONT_SIZE_NORMAL, ColorAlpha(colors.text, 0.5f));
+	DrawText("numbers: (wip)", x, y, FONT_SIZE_NORMAL, ColorAlpha(colors->text, 0.5f));
 
 	if (Board_IsComplete(&g->board)) {
 		y += CONTROLS_SECTION_SPACING;
-		DrawText("solved!", x, y, FONT_SIZE_HEADING, colors.accent);
+		DrawText("solved!", x, y, FONT_SIZE_HEADING, colors->accent);
 	}
 }
 
@@ -423,9 +436,178 @@ void UI_DrawLoadPuzzleMenu(Game *g) {
 		}
 	}
 
-	/* override: esc goes to menu */
 	if (IsKeyPressed(KEY_ESCAPE)) {
 		g->puzzleListInitialized = false;
 		g->screen = SCREEN_MENU;
+	}
+}
+
+typedef struct SettingsItem {
+	const char *label;
+	int *value;
+	int min;
+	int max;
+	int step;
+} SettingsItem;
+
+void UI_DrawSettingsMenu(Game *g) {
+	ThemeColors colors = CacheThemeColors(&g->theme);
+
+	UI_DrawCenteredText("settings", 80);
+
+	SettingsItem items[] = {
+		{ "tile size", &g->tempConfig.tile_pix, 32, 96, 4 },
+		{ "board padding", &g->tempConfig.board_pad, 8, 48, 4 },
+		{ "sidebar width", &g->tempConfig.sidebar_w, 200, 400, 20 },
+		{ "topbar height", &g->tempConfig.topbar_h, 40, 80, 4 },
+		{ "grid line (thin)", &g->tempConfig.grid_line_thick, 1, 4, 1 },
+		{ "grid line (bold)", &g->tempConfig.grid_line_thick_bold, 2, 8, 1 },
+	};
+	const int itemCount = sizeof(items) / sizeof(items[0]);
+
+	const int totalItems = itemCount + 2;
+
+	/* handle input */
+	if (IsKeyPressed(KEY_UP)) {
+		g->settingsSelection = (g->settingsSelection - 1 < 0)
+			? totalItems - 1
+			: g->settingsSelection - 1;
+	}
+	if (IsKeyPressed(KEY_DOWN)) {
+		g->settingsSelection = (g->settingsSelection + 1 >= totalItems)
+			? 0
+			: g->settingsSelection + 1;
+	}
+
+	/* adjust values with left/right */
+	if (g->settingsSelection < itemCount) {
+		SettingsItem *item = &items[g->settingsSelection];
+		if (IsKeyPressed(KEY_LEFT) && *item->value > item->min) {
+			*item->value -= item->step;
+			if (*item->value < item->min) *item->value = item->min;
+			g->settingsNeedApply = true;
+		}
+		if (IsKeyPressed(KEY_RIGHT) && *item->value < item->max) {
+			*item->value += item->step;
+			if (*item->value > item->max) *item->value = item->max;
+			g->settingsNeedApply = true;
+		}
+	}
+
+	int startY = 160;
+	int lineHeight = 36;
+
+	for (int i = 0; i < itemCount; i++) {
+		int y = startY + i * lineHeight;
+		bool isSelected = (g->settingsSelection == i);
+
+		Color labelColor = isSelected ? colors.accent : colors.text;
+		/* keep value visible with high contrast - use digitUser for unselected, text for selected */
+		Color valueColor = isSelected ? colors.text : colors.digitUser;
+
+		/* draw label on the left */
+		char label[128];
+		snprintf(label, sizeof(label), "%s:", items[i].label);
+		DrawText(label, WINDOW_W / 2 - 180, y, FONT_SIZE_NORMAL, labelColor);
+
+		/* draw arrows on either side of the value if selected */
+		if (isSelected) {
+			DrawText("<", WINDOW_W / 2 + 30, y, FONT_SIZE_NORMAL, colors.accent);
+			DrawText(">", WINDOW_W / 2 + 150, y, FONT_SIZE_NORMAL, colors.accent);
+		}
+
+		char value[32];
+		snprintf(value, sizeof(value), "%d", *items[i].value);
+		int valueWidth = MeasureText(value, FONT_SIZE_NORMAL);
+		int valueX = WINDOW_W / 2 + 90 - valueWidth / 2; /* center between arrows */
+		DrawText(value, valueX, y, FONT_SIZE_NORMAL, valueColor);
+	}
+
+	/* draw save/cancel buttons using same style as main menu */
+	int buttonY = startY + itemCount * lineHeight + 40;
+
+	/* save button */
+	bool saveSelected = (g->settingsSelection == itemCount);
+	int saveTextWidth = MeasureText("save & apply", FONT_SIZE_MENU);
+	int saveX = WINDOW_W / 2 - saveTextWidth / 2;
+
+	Color saveTextColor = saveSelected ? ColorFromUInt(COLOR_MENU_SEL)
+					   : ColorFromUInt(COLOR_MENU_TEXT);
+
+	if (saveSelected) {
+		DrawRectangle(saveX - MENU_PADDING_X,
+			buttonY - MENU_PADDING_Y,
+			saveTextWidth + 2 * MENU_PADDING_X,
+			FONT_SIZE_MENU + 2 * MENU_PADDING_Y,
+			ColorFromUInt(COLOR_MENU_SEL_BG));
+	}
+
+	DrawText("save & apply", saveX, buttonY, FONT_SIZE_MENU, saveTextColor);
+
+	buttonY += 48;
+	bool cancelSelected = (g->settingsSelection == itemCount + 1);
+	/* TODO: do this more efficiently */
+	int cancelTextWidth = MeasureText("cancel", FONT_SIZE_MENU);
+	int cancelX = WINDOW_W / 2 - cancelTextWidth / 2;
+
+	Color cancelTextColor = cancelSelected ? ColorFromUInt(COLOR_MENU_SEL)
+					       : ColorFromUInt(COLOR_MENU_TEXT);
+
+	if (cancelSelected) {
+		DrawRectangle(cancelX - MENU_PADDING_X,
+			buttonY - MENU_PADDING_Y,
+			cancelTextWidth + 2 * MENU_PADDING_X,
+			FONT_SIZE_MENU + 2 * MENU_PADDING_Y,
+			ColorFromUInt(COLOR_MENU_SEL_BG));
+	}
+
+	DrawText("cancel", cancelX, buttonY, FONT_SIZE_MENU, cancelTextColor);
+
+	/* draw instructions */
+	DrawText("use arrow keys to adjust values",
+		WINDOW_W / 2 - 150,
+		WINDOW_H - 80,
+		FONT_SIZE_SMALL,
+		ColorAlpha(colors.text, 0.7f));
+	DrawText("press enter to select",
+		WINDOW_W / 2 - 100,
+		WINDOW_H - 60,
+		FONT_SIZE_SMALL,
+		ColorAlpha(colors.text, 0.7f));
+
+	if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+		if (g->settingsSelection == itemCount) {
+			const char *keys[] = { "tile_pix",
+				"board_pad",
+				"sidebar_w",
+				"topbar_h",
+				"grid_line_thick",
+				"grid_line_thick_bold" };
+			int values[] = { g->tempConfig.tile_pix,
+				g->tempConfig.board_pad,
+				g->tempConfig.sidebar_w,
+				g->tempConfig.topbar_h,
+				g->tempConfig.grid_line_thick,
+				g->tempConfig.grid_line_thick_bold };
+
+			if (Config_UpdateValues(
+				    "config.lua", "window", keys, values, itemCount)) {
+				printf("config updated successfully!\n");
+
+				if (g->settingsNeedApply) {
+					SetWindowSize(WINDOW_W, WINDOW_H);
+					g->settingsNeedApply = false;
+				}
+			}
+			else {
+				fprintf(stderr, "failed to update config\n");
+			}
+
+			g->screen = SCREEN_MENU;
+		}
+		else if (g->settingsSelection == itemCount + 1) {
+			g->settingsNeedApply = false;
+			g->screen = SCREEN_MENU;
+		}
 	}
 }

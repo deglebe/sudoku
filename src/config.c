@@ -16,36 +16,33 @@
 Config g_config;
 
 /* helper to get integer from lua table */
-#define LUA_GET_INT(L, table, field, dest)                                             \
-	do {                                                                           \
-		lua_getfield(L, -1, field);                                            \
-		if (lua_isinteger(L, -1)) {                                            \
-			dest = (int) lua_tointeger(L, -1);                             \
-		}                                                                      \
-		lua_pop(L, 1);                                                         \
-	} while (0)
+static inline void lua_get_int(lua_State *L, const char *field, int *dest) {
+	lua_getfield(L, -1, field);
+	if (lua_isinteger(L, -1)) {
+		*dest = (int) lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+}
 
 /* helper to get unsigned int from lua table */
-#define LUA_GET_UINT(L, table, field, dest)                                            \
-	do {                                                                           \
-		lua_getfield(L, -1, field);                                            \
-		if (lua_isinteger(L, -1)) {                                            \
-			dest = (unsigned int) lua_tointeger(L, -1);                    \
-		}                                                                      \
-		lua_pop(L, 1);                                                         \
-	} while (0)
+static inline void lua_get_uint(lua_State *L, const char *field, unsigned int *dest) {
+	lua_getfield(L, -1, field);
+	if (lua_isinteger(L, -1)) {
+		*dest = (unsigned int) lua_tointeger(L, -1);
+	}
+	lua_pop(L, 1);
+}
 
 /* helper to get string from lua table */
-#define LUA_GET_STR(L, table, field, dest, maxlen)                                     \
-	do {                                                                           \
-		lua_getfield(L, -1, field);                                            \
-		if (lua_isstring(L, -1)) {                                             \
-			const char *str = lua_tostring(L, -1);                         \
-			strncpy(dest, str, maxlen - 1);                                \
-			dest[maxlen - 1] = '\0';                                       \
-		}                                                                      \
-		lua_pop(L, 1);                                                         \
-	} while (0)
+static inline void lua_get_str(lua_State *L, const char *field, char *dest, size_t maxlen) {
+	lua_getfield(L, -1, field);
+	if (lua_isstring(L, -1)) {
+		const char *str = lua_tostring(L, -1);
+		strncpy(dest, str, maxlen - 1);
+		dest[maxlen - 1] = '\0';
+	}
+	lua_pop(L, 1);
+}
 
 /* load configuration from lua file */
 bool Config_Load(Config *cfg, const char *path) {
@@ -76,29 +73,28 @@ bool Config_Load(Config *cfg, const char *path) {
 	/* load app section */
 	lua_getfield(L, -1, "app");
 	if (lua_istable(L, -1)) {
-		LUA_GET_STR(L, "app", "title", cfg->app_title, sizeof(cfg->app_title));
-		LUA_GET_STR(
-			L, "app", "version", cfg->app_version, sizeof(cfg->app_version));
+		lua_get_str(L, "title", cfg->app_title, sizeof(cfg->app_title));
+		lua_get_str(L, "version", cfg->app_version, sizeof(cfg->app_version));
 	}
 	lua_pop(L, 1);
 
 	/* load grid section */
 	lua_getfield(L, -1, "grid");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "grid", "board_size", cfg->board_size);
-		LUA_GET_INT(L, "grid", "subgrid", cfg->subgrid);
+		lua_get_int(L, "board_size", &cfg->board_size);
+		lua_get_int(L, "subgrid", &cfg->subgrid);
 	}
 	lua_pop(L, 1);
 
 	/* load window section */
 	lua_getfield(L, -1, "window");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "window", "tile_pix", cfg->tile_pix);
-		LUA_GET_INT(L, "window", "grid_line_thick", cfg->grid_line_thick);
-		LUA_GET_INT(L, "window", "grid_line_thick_bold", cfg->grid_line_thick_bold);
-		LUA_GET_INT(L, "window", "board_pad", cfg->board_pad);
-		LUA_GET_INT(L, "window", "sidebar_w", cfg->sidebar_w);
-		LUA_GET_INT(L, "window", "topbar_h", cfg->topbar_h);
+		lua_get_int(L, "tile_pix", &cfg->tile_pix);
+		lua_get_int(L, "grid_line_thick", &cfg->grid_line_thick);
+		lua_get_int(L, "grid_line_thick_bold", &cfg->grid_line_thick_bold);
+		lua_get_int(L, "board_pad", &cfg->board_pad);
+		lua_get_int(L, "sidebar_w", &cfg->sidebar_w);
+		lua_get_int(L, "topbar_h", &cfg->topbar_h);
 	}
 	lua_pop(L, 1);
 
@@ -111,111 +107,91 @@ bool Config_Load(Config *cfg, const char *path) {
 	/* load ux section */
 	lua_getfield(L, -1, "ux");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "ux", "repeat_delay_frames", cfg->repeat_delay_frames);
-		LUA_GET_INT(L, "ux", "repeat_rate_frames", cfg->repeat_rate_frames);
+		lua_get_int(L, "repeat_delay_frames", &cfg->repeat_delay_frames);
+		lua_get_int(L, "repeat_rate_frames", &cfg->repeat_rate_frames);
 	}
 	lua_pop(L, 1);
 
 	/* load ui section */
 	lua_getfield(L, -1, "ui");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "ui", "menu_start_y", cfg->menu_start_y);
-		LUA_GET_INT(L, "ui", "menu_item_spacing", cfg->menu_item_spacing);
-		LUA_GET_INT(L, "ui", "menu_padding_x", cfg->menu_padding_x);
-		LUA_GET_INT(L, "ui", "menu_padding_y", cfg->menu_padding_y);
-		LUA_GET_INT(L, "ui", "topbar_padding", cfg->topbar_padding);
-		LUA_GET_INT(L, "ui", "sidebar_margin", cfg->sidebar_margin);
-		LUA_GET_INT(L, "ui", "controls_line_spacing", cfg->controls_line_spacing);
-		LUA_GET_INT(
-			L, "ui", "controls_section_spacing", cfg->controls_section_spacing);
-		LUA_GET_INT(L, "ui", "color_keypad_size", cfg->color_keypad_size);
-		LUA_GET_INT(L, "ui", "color_keypad_spacing", cfg->color_keypad_spacing);
-		LUA_GET_INT(L, "ui", "color_keypad_cols", cfg->color_keypad_cols);
+		lua_get_int(L, "menu_start_y", &cfg->menu_start_y);
+		lua_get_int(L, "menu_item_spacing", &cfg->menu_item_spacing);
+		lua_get_int(L, "menu_padding_x", &cfg->menu_padding_x);
+		lua_get_int(L, "menu_padding_y", &cfg->menu_padding_y);
+		lua_get_int(L, "topbar_padding", &cfg->topbar_padding);
+		lua_get_int(L, "sidebar_margin", &cfg->sidebar_margin);
+		lua_get_int(L, "controls_line_spacing", &cfg->controls_line_spacing);
+		lua_get_int(L, "controls_section_spacing", &cfg->controls_section_spacing);
+		lua_get_int(L, "color_keypad_size", &cfg->color_keypad_size);
+		lua_get_int(L, "color_keypad_spacing", &cfg->color_keypad_spacing);
+		lua_get_int(L, "color_keypad_cols", &cfg->color_keypad_cols);
 	}
 	lua_pop(L, 1);
 
 	/* load font section */
 	lua_getfield(L, -1, "font");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "font", "size_title", cfg->font_size_title);
-		LUA_GET_INT(L, "font", "size_digit", cfg->font_size_digit);
-		LUA_GET_INT(L, "font", "size_menu", cfg->font_size_menu);
-		LUA_GET_INT(L, "font", "size_heading", cfg->font_size_heading);
-		LUA_GET_INT(L, "font", "size_large", cfg->font_size_large);
-		LUA_GET_INT(L, "font", "size_topbar", cfg->font_size_topbar);
-		LUA_GET_INT(L, "font", "size_normal", cfg->font_size_normal);
-		LUA_GET_INT(L, "font", "size_small", cfg->font_size_small);
-		LUA_GET_INT(L, "font", "size_note", cfg->font_size_note);
+		lua_get_int(L, "size_title", &cfg->font_size_title);
+		lua_get_int(L, "size_digit", &cfg->font_size_digit);
+		lua_get_int(L, "size_menu", &cfg->font_size_menu);
+		lua_get_int(L, "size_heading", &cfg->font_size_heading);
+		lua_get_int(L, "size_large", &cfg->font_size_large);
+		lua_get_int(L, "size_topbar", &cfg->font_size_topbar);
+		lua_get_int(L, "size_normal", &cfg->font_size_normal);
+		lua_get_int(L, "size_small", &cfg->font_size_small);
+		lua_get_int(L, "size_note", &cfg->font_size_note);
 	}
 	lua_pop(L, 1);
 
 	/* load cell section */
 	lua_getfield(L, -1, "cell");
 	if (lua_istable(L, -1)) {
-		LUA_GET_INT(L, "cell", "note_padding_x", cfg->note_padding_x);
-		LUA_GET_INT(L, "cell", "note_padding_y", cfg->note_padding_y);
-		LUA_GET_INT(L, "cell", "note_grid_size", cfg->note_grid_size);
+		lua_get_int(L, "note_padding_x", &cfg->note_padding_x);
+		lua_get_int(L, "note_padding_y", &cfg->note_padding_y);
+		lua_get_int(L, "note_grid_size", &cfg->note_grid_size);
 	}
 	lua_pop(L, 1);
 
 	/* load theme section */
 	lua_getfield(L, -1, "theme");
 	if (lua_istable(L, -1)) {
-		LUA_GET_UINT(L, "theme", "bg", cfg->theme.bg);
-		LUA_GET_UINT(L, "theme", "grid", cfg->theme.grid);
-		LUA_GET_UINT(L, "theme", "grid_bold", cfg->theme.gridBold);
-		LUA_GET_UINT(L, "theme", "cell_bg", cfg->theme.cellBg);
-		LUA_GET_UINT(L, "theme", "cell_sel", cfg->theme.cellSel);
-		LUA_GET_UINT(L, "theme", "digit_given", cfg->theme.digitGiven);
-		LUA_GET_UINT(L, "theme", "digit_user", cfg->theme.digitUser);
-		LUA_GET_UINT(L, "theme", "accent", cfg->theme.accent);
-		LUA_GET_UINT(L, "theme", "text", cfg->theme.text);
-		LUA_GET_UINT(L, "theme", "bad", cfg->theme.bad);
-		LUA_GET_UINT(L, "theme", "topbar_bg", cfg->theme.topbarBg);
-		LUA_GET_UINT(L, "theme", "topbar_text", cfg->theme.topbarText);
-		LUA_GET_UINT(L, "theme", "menu_text", cfg->theme.menuText);
-		LUA_GET_UINT(L, "theme", "menu_sel", cfg->theme.menuSel);
-		LUA_GET_UINT(L, "theme", "menu_sel_bg", cfg->theme.menuSelBg);
-		LUA_GET_UINT(L, "theme", "highlight_row_col", cfg->theme.highlightRowCol);
-		LUA_GET_UINT(L, "theme", "highlight_digit", cfg->theme.highlightDigit);
+		lua_get_uint(L, "bg", &cfg->theme.bg);
+		lua_get_uint(L, "grid", &cfg->theme.grid);
+		lua_get_uint(L, "grid_bold", &cfg->theme.gridBold);
+		lua_get_uint(L, "cell_bg", &cfg->theme.cellBg);
+		lua_get_uint(L, "cell_sel", &cfg->theme.cellSel);
+		lua_get_uint(L, "digit_given", &cfg->theme.digitGiven);
+		lua_get_uint(L, "digit_user", &cfg->theme.digitUser);
+		lua_get_uint(L, "accent", &cfg->theme.accent);
+		lua_get_uint(L, "text", &cfg->theme.text);
+		lua_get_uint(L, "bad", &cfg->theme.bad);
+		lua_get_uint(L, "topbar_bg", &cfg->theme.topbarBg);
+		lua_get_uint(L, "topbar_text", &cfg->theme.topbarText);
+		lua_get_uint(L, "menu_text", &cfg->theme.menuText);
+		lua_get_uint(L, "menu_sel", &cfg->theme.menuSel);
+		lua_get_uint(L, "menu_sel_bg", &cfg->theme.menuSelBg);
+		lua_get_uint(L, "highlight_row_col", &cfg->theme.highlightRowCol);
+		lua_get_uint(L, "highlight_digit", &cfg->theme.highlightDigit);
 
 		/* load palette subsection */
 		lua_getfield(L, -1, "palette");
 		if (lua_istable(L, -1)) {
-			LUA_GET_UINT(
-				L, "palette", "red", cfg->theme.cellColors[CELL_COLOR_RED]);
-			LUA_GET_UINT(L,
-				"palette",
-				"orange",
-				cfg->theme.cellColors[CELL_COLOR_ORANGE]);
-			LUA_GET_UINT(L,
-				"palette",
-				"yellow",
-				cfg->theme.cellColors[CELL_COLOR_YELLOW]);
-			LUA_GET_UINT(L,
-				"palette",
-				"green",
-				cfg->theme.cellColors[CELL_COLOR_GREEN]);
-			LUA_GET_UINT(L,
-				"palette",
-				"blue",
-				cfg->theme.cellColors[CELL_COLOR_BLUE]);
-			LUA_GET_UINT(L,
-				"palette",
-				"indigo",
-				cfg->theme.cellColors[CELL_COLOR_INDIGO]);
-			LUA_GET_UINT(L,
-				"palette",
-				"violet",
-				cfg->theme.cellColors[CELL_COLOR_VIOLET]);
-			LUA_GET_UINT(L,
-				"palette",
+			lua_get_uint(L, "red", &cfg->theme.cellColors[CELL_COLOR_RED]);
+			lua_get_uint(
+				L, "orange", &cfg->theme.cellColors[CELL_COLOR_ORANGE]);
+			lua_get_uint(
+				L, "yellow", &cfg->theme.cellColors[CELL_COLOR_YELLOW]);
+			lua_get_uint(L, "green", &cfg->theme.cellColors[CELL_COLOR_GREEN]);
+			lua_get_uint(L, "blue", &cfg->theme.cellColors[CELL_COLOR_BLUE]);
+			lua_get_uint(
+				L, "indigo", &cfg->theme.cellColors[CELL_COLOR_INDIGO]);
+			lua_get_uint(
+				L, "violet", &cfg->theme.cellColors[CELL_COLOR_VIOLET]);
+			lua_get_uint(L,
 				"light_gray",
-				cfg->theme.cellColors[CELL_COLOR_LIGHT_GRAY]);
-			LUA_GET_UINT(L,
-				"palette",
-				"white",
-				cfg->theme.cellColors[CELL_COLOR_WHITE]);
+				&cfg->theme.cellColors[CELL_COLOR_LIGHT_GRAY]);
+			lua_get_uint(L, "white", &cfg->theme.cellColors[CELL_COLOR_WHITE]);
 		}
 		lua_pop(L, 1); /* pop palette */
 	}
@@ -227,9 +203,119 @@ bool Config_Load(Config *cfg, const char *path) {
 	return true;
 }
 
+/* update specific config values via text replacement (preserves comments and formatting) */
+bool Config_UpdateValues(
+	const char *path, const char *section, const char **keys, const int *values, int count) {
+	(void) section; /* reserved for future section-aware updates */
+
+	/* read entire file into memory */
+	FILE *f = fopen(path, "r");
+	if (!f) {
+		fprintf(stderr, "failed to open config file '%s' for reading\n", path);
+		return false;
+	}
+
+	fseek(f, 0, SEEK_END);
+	long fileSize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	char *content = malloc(fileSize + 1);
+	if (!content) {
+		fclose(f);
+		return false;
+	}
+
+	size_t bytesRead = fread(content, 1, fileSize, f);
+	content[bytesRead] = '\0';
+	fclose(f);
+
+	/* create a buffer for the new content */
+	char *newContent = malloc(fileSize * 2);
+	if (!newContent) {
+		free(content);
+		return false;
+	}
+
+	char *src = content;
+	char *dst = newContent;
+
+	/* process line by line */
+	while (*src) {
+		/* find line boundaries */
+		char *lineStart = src;
+		char *lineEnd = strchr(src, '\n');
+		size_t lineLen = lineEnd ? (size_t) (lineEnd - src) : strlen(src);
+
+		/* check if this line contains any of our keys */
+		bool replaced = false;
+		for (int i = 0; i < count && !replaced; i++) {
+			char pattern[128];
+			snprintf(pattern, sizeof(pattern), "%s = ", keys[i]);
+
+			char *match = strstr(lineStart, pattern);
+			/* ensure match is within current line */
+			if (match && match < lineStart + lineLen) {
+				size_t prefixLen = match - lineStart + strlen(pattern);
+				memcpy(dst, lineStart, prefixLen);
+				dst += prefixLen;
+
+				/* write the new value */
+				dst += sprintf(dst, "%d", values[i]);
+
+				char *valueStart = match + strlen(pattern);
+				while (*valueStart == ' ' || *valueStart == '\t')
+					valueStart++;
+				char *valueEnd = valueStart;
+				while (valueEnd < lineStart + lineLen && *valueEnd != ','
+					&& *valueEnd != '\n' && *valueEnd != '\r') {
+					valueEnd++;
+				}
+
+				size_t remainLen = (lineStart + lineLen) - valueEnd;
+				memcpy(dst, valueEnd, remainLen);
+				dst += remainLen;
+
+				replaced = true;
+			}
+		}
+
+		if (!replaced) {
+			memcpy(dst, lineStart, lineLen);
+			dst += lineLen;
+		}
+
+		if (lineEnd) {
+			*dst++ = '\n';
+			src = lineEnd + 1;
+		}
+		else {
+			break;
+		}
+	}
+
+	*dst = '\0';
+
+	/* write back to file */
+	f = fopen(path, "w");
+	if (!f) {
+		fprintf(stderr, "failed to open config file '%s' for writing\n", path);
+		free(content);
+		free(newContent);
+		return false;
+	}
+
+	fputs(newContent, f);
+	fclose(f);
+
+	free(content);
+	free(newContent);
+
+	/* reload config to apply changes */
+	return Config_Load(&g_config, path);
+}
+
 /* initialize config with defaults and load from file */
 void Config_Init(void) {
-	/* set some sensible defaults first */
 	g_config = (Config) { .app_title = "sudoku",
 		.app_version = "0.1.0",
 		.board_size = 9,
@@ -298,7 +384,6 @@ void Config_Init(void) {
 	g_config.window_h = g_config.board_pad * 2
 		+ g_config.tile_pix * g_config.board_size + g_config.topbar_h;
 
-	/* try to load from file (fallback to defaults if it fails) */
 	if (!Config_Load(&g_config, "config.lua")) {
 		fprintf(stderr, "warning: failed to load config.lua, using defaults\n");
 	}

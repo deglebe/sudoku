@@ -14,11 +14,8 @@ static inline int get_box_id(int row, int col) {
 	return (row / SUBGRID) * SUBGRID + (col / SUBGRID);
 }
 
-static bool g_generator_seeded = false;
-
 void Generator_Seed(unsigned int seed) {
-	srand(seed ? seed : time(NULL));
-	g_generator_seeded = true;
+	srand(seed ? seed : (unsigned int) time(NULL));
 }
 
 /* dlx */
@@ -190,7 +187,6 @@ static bool DLX_SolveRandom(DLXRoot *dlx, int sol[BOARD_SIZE * BOARD_SIZE * BOAR
 
 bool Generator_FillGrid(Board *b) {
 	Board_Clear(b);
-	if (!g_generator_seeded) Generator_Seed(0);
 
 	DLXRoot dlx;
 	DLX_BuildFromBoard(&dlx, b);

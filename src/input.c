@@ -25,15 +25,9 @@ static bool MouseToBoardCoords(int mouseX, int mouseY, int *row, int *col) {
 		return false;
 	}
 
-	/* convert to cell coordinates */
+	/* convert to cell coordinates - already in valid range due to bounds check */
 	*col = (mouseX - boardX) / TILE_PIX;
 	*row = (mouseY - boardY) / TILE_PIX;
-
-	/* clamp to valid range */
-	if (*row < 0) *row = 0;
-	if (*row >= BOARD_SIZE) *row = BOARD_SIZE - 1;
-	if (*col < 0) *col = 0;
-	if (*col >= BOARD_SIZE) *col = BOARD_SIZE - 1;
 
 	return true;
 }

@@ -123,6 +123,8 @@ extern Config g_config;
 /* config api */
 void Config_Init(void);
 bool Config_Load(Config *cfg, const char *path);
+bool Config_UpdateValues(
+	const char *path, const char *section, const char **keys, const int *values, int count);
 
 /* backward compatibility macros for existing code */
 #define APP_TITLE (g_config.app_title)

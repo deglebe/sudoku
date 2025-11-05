@@ -15,12 +15,12 @@ config = {
 
 	-- window settings
 	window = {
-		tile_pix = 64,
-		grid_line_thick = 2,
-		grid_line_thick_bold = 4,
-		board_pad = 24,
-		sidebar_w = 280,
-		topbar_h = 56
+		tile_pix = 76,
+		grid_line_thick = 3,
+		grid_line_thick_bold = 6,
+		board_pad = 28,
+		sidebar_w = 340,
+		topbar_h = 48
 	},
 
 	-- ux settings
