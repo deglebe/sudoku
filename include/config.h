@@ -8,55 +8,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define APP_TITLE "sudoku"
-#define APP_VERSION "0.0.2"
-
-/* grid defs */
-#define BOARD_SIZE 9
-#define SUBGRID 3
-
-/* window */
-#define TILE_PIX 64
-#define GRID_LINE_THICK 2
-#define GRID_LINE_THICK_B 4
-#define BOARD_PAD 24
-#define SIDEBAR_W 280
-#define TOPBAR_H 56
-#define WINDOW_W (BOARD_PAD * 2 + TILE_PIX * BOARD_SIZE + SIDEBAR_W)
-#define WINDOW_H (BOARD_PAD * 2 + TILE_PIX * BOARD_SIZE + TOPBAR_H)
-
-/* ux */
-#define REPEAT_DELAY_FRAMES 22
-#define REPEAT_RATE_FRAMES 5
-
-/* ui Layout constants */
-#define MENU_START_Y 200
-#define MENU_ITEM_SPACING 56
-#define MENU_PADDING_X 16
-#define MENU_PADDING_Y 8
-#define TOPBAR_PADDING 16
-#define SIDEBAR_MARGIN 16
-#define CONTROLS_LINE_SPACING 22
-#define CONTROLS_SECTION_SPACING 28
-#define COLOR_KEYPAD_SIZE 32
-#define COLOR_KEYPAD_SPACING 8
-#define COLOR_KEYPAD_COLS 3
-
-/* font sizes */
-#define FONT_SIZE_TITLE 48
-#define FONT_SIZE_DIGIT 36
-#define FONT_SIZE_MENU 32
-#define FONT_SIZE_HEADING 24
-#define FONT_SIZE_LARGE 22
-#define FONT_SIZE_TOPBAR 20
-#define FONT_SIZE_NORMAL 18
-#define FONT_SIZE_SMALL 16
-#define FONT_SIZE_NOTE 14
-
-/* cell layout */
-#define NOTE_PADDING_X 6
-#define NOTE_PADDING_Y 4
-#define NOTE_GRID_SIZE 3
+/* compile-time constants needed for array sizes */
+#define BOARD_SIZE_MAX 9
+#define SUBGRID_MAX 3
 
 /* cell color palette */
 typedef enum CellColor {
@@ -85,37 +39,7 @@ typedef enum Difficulty {
 	DIFFICULTY_EXPERT = 4
 } Difficulty;
 
-/* theme colors (rgba format: 0xRRGGBBAA) */
-#define COLOR_BG 0xFFFFFFFF
-#define COLOR_GRID 0x000000FF
-#define COLOR_GRID_BOLD 0x000000FF
-#define COLOR_CELL_BG 0xFFFFFFFF
-#define COLOR_CELL_SEL 0x2B5CFF40
-#define COLOR_DIGIT_GIVEN 0x000000FF
-#define COLOR_DIGIT_USER 0x0066FFFF
-#define COLOR_ACCENT 0x2B5CFFFF
-#define COLOR_TEXT 0x000000FF
-#define COLOR_BAD 0xFF4D4DFF
-#define COLOR_TOPBAR_BG 0xF0F0F0FF
-#define COLOR_TOPBAR_TEXT 0x000000FF
-#define COLOR_MENU_TEXT 0x333333FF
-#define COLOR_MENU_SEL 0x2B5CFFFF
-#define COLOR_MENU_SEL_BG 0x2B5CFF30
-#define COLOR_HIGHLIGHT_ROW_COL 0x2B5CFF15
-#define COLOR_HIGHLIGHT_DIGIT 0xFFD70025
-
-/* cell color palette colors (semi-transparent backgrounds) */
-#define COLOR_PALETTE_RED 0xFF6B6B80
-#define COLOR_PALETTE_ORANGE 0xFFA50080
-#define COLOR_PALETTE_YELLOW 0xFFEB3B80
-#define COLOR_PALETTE_GREEN 0x4CAF5080
-#define COLOR_PALETTE_BLUE 0x2196F380
-#define COLOR_PALETTE_INDIGO 0x3F51B580
-#define COLOR_PALETTE_VIOLET 0x9C27B080
-#define COLOR_PALETTE_LIGHT_GRAY 0xBDBDBD80
-#define COLOR_PALETTE_WHITE 0xFFFFFF80
-
-/* forward decl for theme */
+/* theme structure */
 typedef struct Theme {
 	unsigned int bg;
 	unsigned int grid;
@@ -129,7 +53,146 @@ typedef struct Theme {
 	unsigned int bad;
 	unsigned int highlightRowCol;
 	unsigned int highlightDigit;
+	unsigned int topbarBg;
+	unsigned int topbarText;
+	unsigned int menuText;
+	unsigned int menuSel;
+	unsigned int menuSelBg;
 	unsigned int cellColors[CELL_COLOR_COUNT];
 } Theme;
+
+/* runtime configuration structure */
+typedef struct Config {
+	/* application metadata */
+	char app_title[64];
+	char app_version[16];
+
+	/* grid definitions */
+	int board_size;
+	int subgrid;
+
+	/* window settings */
+	int tile_pix;
+	int grid_line_thick;
+	int grid_line_thick_bold;
+	int board_pad;
+	int sidebar_w;
+	int topbar_h;
+	int window_w; /* calculated */
+	int window_h; /* calculated */
+
+	/* ux settings */
+	int repeat_delay_frames;
+	int repeat_rate_frames;
+
+	/* ui layout constants */
+	int menu_start_y;
+	int menu_item_spacing;
+	int menu_padding_x;
+	int menu_padding_y;
+	int topbar_padding;
+	int sidebar_margin;
+	int controls_line_spacing;
+	int controls_section_spacing;
+	int color_keypad_size;
+	int color_keypad_spacing;
+	int color_keypad_cols;
+
+	/* font sizes */
+	int font_size_title;
+	int font_size_digit;
+	int font_size_menu;
+	int font_size_heading;
+	int font_size_large;
+	int font_size_topbar;
+	int font_size_normal;
+	int font_size_small;
+	int font_size_note;
+
+	/* cell layout */
+	int note_padding_x;
+	int note_padding_y;
+	int note_grid_size;
+
+	/* theme */
+	Theme theme;
+} Config;
+
+extern Config g_config;
+
+/* config api */
+void Config_Init(void);
+bool Config_Load(Config *cfg, const char *path);
+bool Config_UpdateValues(
+	const char *path, const char *section, const char **keys, const int *values, int count);
+
+/* backward compatibility macros for existing code */
+#define APP_TITLE (g_config.app_title)
+#define APP_VERSION (g_config.app_version)
+#define BOARD_SIZE (g_config.board_size)
+#define SUBGRID (g_config.subgrid)
+#define TILE_PIX (g_config.tile_pix)
+#define GRID_LINE_THICK (g_config.grid_line_thick)
+#define GRID_LINE_THICK_B (g_config.grid_line_thick_bold)
+#define BOARD_PAD (g_config.board_pad)
+#define SIDEBAR_W (g_config.sidebar_w)
+#define TOPBAR_H (g_config.topbar_h)
+#define WINDOW_W (g_config.window_w)
+#define WINDOW_H (g_config.window_h)
+#define REPEAT_DELAY_FRAMES (g_config.repeat_delay_frames)
+#define REPEAT_RATE_FRAMES (g_config.repeat_rate_frames)
+#define MENU_START_Y (g_config.menu_start_y)
+#define MENU_ITEM_SPACING (g_config.menu_item_spacing)
+#define MENU_PADDING_X (g_config.menu_padding_x)
+#define MENU_PADDING_Y (g_config.menu_padding_y)
+#define TOPBAR_PADDING (g_config.topbar_padding)
+#define SIDEBAR_MARGIN (g_config.sidebar_margin)
+#define CONTROLS_LINE_SPACING (g_config.controls_line_spacing)
+#define CONTROLS_SECTION_SPACING (g_config.controls_section_spacing)
+#define COLOR_KEYPAD_SIZE (g_config.color_keypad_size)
+#define COLOR_KEYPAD_SPACING (g_config.color_keypad_spacing)
+#define COLOR_KEYPAD_COLS (g_config.color_keypad_cols)
+#define FONT_SIZE_TITLE (g_config.font_size_title)
+#define FONT_SIZE_DIGIT (g_config.font_size_digit)
+#define FONT_SIZE_MENU (g_config.font_size_menu)
+#define FONT_SIZE_HEADING (g_config.font_size_heading)
+#define FONT_SIZE_LARGE (g_config.font_size_large)
+#define FONT_SIZE_TOPBAR (g_config.font_size_topbar)
+#define FONT_SIZE_NORMAL (g_config.font_size_normal)
+#define FONT_SIZE_SMALL (g_config.font_size_small)
+#define FONT_SIZE_NOTE (g_config.font_size_note)
+#define NOTE_PADDING_X (g_config.note_padding_x)
+#define NOTE_PADDING_Y (g_config.note_padding_y)
+#define NOTE_GRID_SIZE (g_config.note_grid_size)
+
+/* theme color macros */
+#define COLOR_BG (g_config.theme.bg)
+#define COLOR_GRID (g_config.theme.grid)
+#define COLOR_GRID_BOLD (g_config.theme.gridBold)
+#define COLOR_CELL_BG (g_config.theme.cellBg)
+#define COLOR_CELL_SEL (g_config.theme.cellSel)
+#define COLOR_DIGIT_GIVEN (g_config.theme.digitGiven)
+#define COLOR_DIGIT_USER (g_config.theme.digitUser)
+#define COLOR_ACCENT (g_config.theme.accent)
+#define COLOR_TEXT (g_config.theme.text)
+#define COLOR_BAD (g_config.theme.bad)
+#define COLOR_HIGHLIGHT_ROW_COL (g_config.theme.highlightRowCol)
+#define COLOR_HIGHLIGHT_DIGIT (g_config.theme.highlightDigit)
+#define COLOR_TOPBAR_BG (g_config.theme.topbarBg)
+#define COLOR_TOPBAR_TEXT (g_config.theme.topbarText)
+#define COLOR_MENU_TEXT (g_config.theme.menuText)
+#define COLOR_MENU_SEL (g_config.theme.menuSel)
+#define COLOR_MENU_SEL_BG (g_config.theme.menuSelBg)
+
+/* cell color palette macros */
+#define COLOR_PALETTE_RED (g_config.theme.cellColors[CELL_COLOR_RED])
+#define COLOR_PALETTE_ORANGE (g_config.theme.cellColors[CELL_COLOR_ORANGE])
+#define COLOR_PALETTE_YELLOW (g_config.theme.cellColors[CELL_COLOR_YELLOW])
+#define COLOR_PALETTE_GREEN (g_config.theme.cellColors[CELL_COLOR_GREEN])
+#define COLOR_PALETTE_BLUE (g_config.theme.cellColors[CELL_COLOR_BLUE])
+#define COLOR_PALETTE_INDIGO (g_config.theme.cellColors[CELL_COLOR_INDIGO])
+#define COLOR_PALETTE_VIOLET (g_config.theme.cellColors[CELL_COLOR_VIOLET])
+#define COLOR_PALETTE_LIGHT_GRAY (g_config.theme.cellColors[CELL_COLOR_LIGHT_GRAY])
+#define COLOR_PALETTE_WHITE (g_config.theme.cellColors[CELL_COLOR_WHITE])
 
 #endif // CONFIG_H

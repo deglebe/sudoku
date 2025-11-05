@@ -38,6 +38,11 @@ typedef struct Game {
 	int loadPuzzleSelection;
 	bool puzzleListInitialized;
 	PuzzleFileList puzzleList;
+
+	/* settings state */
+	int settingsSelection;
+	Config tempConfig; /* temporary config while editing */
+	bool settingsNeedApply; /* track if window resize is needed */
 } Game;
 
 void Game_Init(Game *g);

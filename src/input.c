@@ -25,15 +25,9 @@ static bool MouseToBoardCoords(int mouseX, int mouseY, int *row, int *col) {
 		return false;
 	}
 
-	/* convert to cell coordinates */
+	/* convert to cell coordinates - already in valid range due to bounds check */
 	*col = (mouseX - boardX) / TILE_PIX;
 	*row = (mouseY - boardY) / TILE_PIX;
-
-	/* clamp to valid range */
-	if (*row < 0) *row = 0;
-	if (*row >= BOARD_SIZE) *row = BOARD_SIZE - 1;
-	if (*col < 0) *col = 0;
-	if (*col >= BOARD_SIZE) *col = BOARD_SIZE - 1;
 
 	return true;
 }
@@ -47,7 +41,7 @@ static int MouseToColorIndex(int mouseX, int mouseY) {
 	 * + CONTROLS_SECTION_SPACING + 8 (after last control)
 	 * + CONTROLS_SECTION_SPACING (after "color palette:")
 	 */
-	int keypadY = TOPBAR_H + BOARD_PAD + CONTROLS_SECTION_SPACING * 3 
+	int keypadY = TOPBAR_H + BOARD_PAD + CONTROLS_SECTION_SPACING * 3
 		+ CONTROLS_LINE_SPACING * 5 + 8;
 
 	/* check each color button */
@@ -57,8 +51,8 @@ static int MouseToColorIndex(int mouseX, int mouseY) {
 		int px = keypadX + col * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
 		int py = keypadY + row * (COLOR_KEYPAD_SIZE + COLOR_KEYPAD_SPACING);
 
-		if (mouseX >= px && mouseX < px + COLOR_KEYPAD_SIZE
-			&& mouseY >= py && mouseY < py + COLOR_KEYPAD_SIZE) {
+		if (mouseX >= px && mouseX < px + COLOR_KEYPAD_SIZE && mouseY >= py
+			&& mouseY < py + COLOR_KEYPAD_SIZE) {
 			return i;
 		}
 	}
@@ -77,7 +71,8 @@ void Input_Update(Game *g) {
 		}
 		else {
 			/* check if clicking on color keypad */
-			int colorIdx = MouseToColorIndex((int) mousePos.x, (int) mousePos.y);
+			int colorIdx
+				= MouseToColorIndex((int) mousePos.x, (int) mousePos.y);
 			if (colorIdx > 0) {
 				Cell *cell = &g->board.cells[g->selRow][g->selCol];
 				/* toggle color: if same color is already on cell, remove it */

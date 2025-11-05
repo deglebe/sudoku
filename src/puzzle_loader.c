@@ -78,42 +78,37 @@ bool Puzzle_LoadFromString(Puzzle *puzzle, const char *data) {
 		trim(buffer);
 
 		/* skipping empty lines */
-		if (buffer[0] != '\0') { /* metadata parsing */
+		if (buffer[0] != '\0') {
+			/* check for metadata lines */
 			if (parse_metadata_line(
 				    buffer, "title", puzzle->meta.title, MAX_PUZZLE_TITLE)) {
-			} /* title parsed */
+				/* title parsed successfully */
+			}
 			else if (parse_metadata_line(buffer,
 					 "author",
 					 puzzle->meta.author,
 					 MAX_PUZZLE_AUTHOR)) {
-			} /* author parsed */
-			else if (strlen(buffer) >= BOARD_SIZE) {
-				if (board_row < BOARD_SIZE) {
-					for (int c = 0; c < BOARD_SIZE; c++) {
-						char ch = buffer[c];
-						if (ch >= '1' && ch <= '9') {
-							puzzle->board
-								.cells[board_row][c]
-								.value
-								= (uint8_t) (ch - '0');
-							puzzle->board
-								.cells[board_row][c]
-								.given
-								= true;
-						}
-						else {
-							puzzle->board
-								.cells[board_row][c]
-								.value
-								= 0;
-							puzzle->board
-								.cells[board_row][c]
-								.given
-								= false;
-						}
+				/* author parsed successfully */
+			}
+			/* otherwise try to parse as board row */
+			else if (strlen(buffer) >= (size_t) BOARD_SIZE
+				&& board_row < BOARD_SIZE) {
+				for (int c = 0; c < BOARD_SIZE; c++) {
+					char ch = buffer[c];
+					if (ch >= '1' && ch <= '9') {
+						puzzle->board.cells[board_row][c].value
+							= (uint8_t) (ch - '0');
+						puzzle->board.cells[board_row][c].given
+							= true;
 					}
-					board_row++;
+					else {
+						puzzle->board.cells[board_row][c].value
+							= 0;
+						puzzle->board.cells[board_row][c].given
+							= false;
+					}
 				}
+				board_row++;
 			}
 		}
 

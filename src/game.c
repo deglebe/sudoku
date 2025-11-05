@@ -29,14 +29,27 @@ void Game_Init(Game *g) {
 	g->puzzleListInitialized = false;
 	g->puzzleList.count = 0;
 
+	/* settings state */
+	g->settingsSelection = 0;
+	g->tempConfig = g_config;
+	g->settingsNeedApply = false;
+
 	Board_Clear(&g->board);
 }
 
 void Game_Update(Game *g) {
+	/* handle input for play screen */
+	if (g->screen == SCREEN_PLAY) {
+		Input_Update(g);
+		return;
+	}
+
+	/* all menu screens share the same rendering setup */
+	ClearBackground(ColorFromUInt(g->theme.bg));
+	UI_DrawTopBar(g);
+
 	switch (g->screen) {
 	case SCREEN_MENU:
-		ClearBackground(ColorFromUInt(g->theme.bg));
-		UI_DrawTopBar(g);
 		UI_DrawCenteredText("sudoku", 120);
 		const char *items[] = { "play random", "load puzzle", "settings", "quit" };
 		int hit = UI_Menu(items, 4, &g->menuSelection);
@@ -46,20 +59,23 @@ void Game_Update(Game *g) {
 				SCREEN_SETTINGS,
 				SCREEN_QUIT };
 			g->screen = screens[hit];
+
+			/* initialize settings when entering settings screen */
+			if (g->screen == SCREEN_SETTINGS) {
+				g->tempConfig = g_config;
+				g->settingsSelection = 0;
+				g->settingsNeedApply = false;
+			}
 		}
 		break;
 	case SCREEN_DIFFICULTY:
-		ClearBackground(ColorFromUInt(g->theme.bg));
-		UI_DrawTopBar(g);
 		UI_DrawDifficultyMenu(g);
 		break;
 	case SCREEN_LOAD_PUZZLE:
-		ClearBackground(ColorFromUInt(g->theme.bg));
-		UI_DrawTopBar(g);
 		UI_DrawLoadPuzzleMenu(g);
 		break;
-	case SCREEN_PLAY:
-		Input_Update(g);
+	case SCREEN_SETTINGS:
+		UI_DrawSettingsMenu(g);
 		break;
 	default:
 		break;
@@ -74,17 +90,6 @@ void Game_Draw(const Game *g) {
 		ClearBackground(ColorFromUInt(g->theme.bg));
 		UI_DrawTopBar(g);
 		UI_DrawBoard(g);
-		UI_DrawSidebar(g);
-		break;
-	case SCREEN_SETTINGS:
-		ClearBackground(ColorFromUInt(g->theme.bg));
-		UI_DrawTopBar(g);
-		UI_DrawCenteredText("settings (wip)", WINDOW_H / 2 - 18);
-		DrawText("TODO: themes, input config, generator toggles",
-			120,
-			WINDOW_H / 2 + 20,
-			20,
-			ColorFromUInt(g->theme.text));
 		break;
 	case SCREEN_QUIT:
 		ClearBackground(ColorFromUInt(g->theme.bg));
