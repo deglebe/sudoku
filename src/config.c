@@ -1,5 +1,5 @@
 /* src/config.c
- * Runtime configuration loading from Lua
+ * cuntime configuration loading from Lua
  */
 
 #define _GNU_SOURCE
@@ -317,7 +317,7 @@ bool Config_UpdateValues(
 /* initialize config with defaults and load from file */
 void Config_Init(void) {
 	g_config = (Config) { .app_title = "sudoku",
-		.app_version = "0.1.0",
+		.app_version = "0.1.1",
 		.board_size = 9,
 		.subgrid = 3,
 		.tile_pix = 64,

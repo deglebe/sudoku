@@ -138,4 +138,7 @@ void Input_Update(Game *g) {
 
 	/* conflict highlighting (default on)*/
 	if (IsKeyPressed(KEY_H)) g->highlightConflicts = !g->highlightConflicts;
+
+	/* pause/play toggle */
+	if (IsKeyPressed(KEY_SPACE)) g->paused = !g->paused;
 }

@@ -73,7 +73,9 @@ jobs:
           mkdir -p dist
           cp sudoku.exe dist/sudoku.exe || cp sudoku dist/sudoku.exe
           cp raylib-win/raylib-5.5_win64_mingw-w64/lib/raylib.dll dist/
-          cp README.md LICENSE dist/ || true
+          cp config.lua README.md LICENSE dist/ || true
+          mkdir -p dist/puzzles
+          cp puzzles/*.txt dist/puzzles/ || true
           cd dist && zip -r ../sudoku-win64.zip *
 
       - name: Upload artifacts

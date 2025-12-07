@@ -17,6 +17,7 @@ classic sudoku.
     - red, orange, yellow, green, blue, indigo, violet, light gray, white
     - click color buttons in sidebar to apply to selected cell
     - clicking same color removes it from the cell
+- game pause/play and board hiding overlay
 
 ## todo:
 
