@@ -183,7 +183,7 @@ static void DrawCellContent(Rectangle cell,
 	}
 }
 
-/* draw the top bar with title and mode indicator */
+/* draw the top bar with title, timer, and mode indicator */
 void UI_DrawTopBar(const Game *g) {
 	DrawRectangle(0, 0, WINDOW_W, TOPBAR_H, ColorFromUInt(COLOR_TOPBAR_BG));
 
@@ -203,19 +203,38 @@ void UI_DrawTopBar(const Game *g) {
 		ColorFromUInt(COLOR_TOPBAR_TEXT));
 
 	if (g->screen == SCREEN_PLAY) {
+		/* draw timer in the center */
+		int minutes = g->elapsedSeconds / 60;
+		int seconds = g->elapsedSeconds % 60;
+		char timerText[16];
+		snprintf(timerText, sizeof(timerText), "%02d:%02d", minutes, seconds);
+
+		int timerWidth = MeasureText(timerText, FONT_SIZE_TOPBAR);
+		int timerX = WINDOW_W / 2 - timerWidth / 2;
+		Color timerColor = g->paused ? ColorFromUInt(COLOR_ACCENT)
+					     : ColorFromUInt(COLOR_TOPBAR_TEXT);
+		DrawText(timerText, timerX, TOPBAR_PADDING, FONT_SIZE_TOPBAR, timerColor);
+
+		/* draw pause/play button */
+		const char *pauseText = g->paused ? ">" : "||";
+		int pauseWidth = MeasureText(pauseText, FONT_SIZE_TOPBAR);
+		int pauseX = timerX - pauseWidth - TOPBAR_PADDING;
+
+		Color pauseColor = g->paused ? ColorFromUInt(COLOR_ACCENT)
+					     : ColorFromUInt(COLOR_TOPBAR_TEXT);
+		DrawText(pauseText, pauseX, TOPBAR_PADDING, FONT_SIZE_TOPBAR, pauseColor);
+
+		/* draw mode indicator on the right */
 		const char *modeText = g->inputMode == INPUT_MODE_INSERT
 			? "mode: INSERT"
 			: "mode: NOTES";
-		int textWidth = MeasureText(modeText, FONT_SIZE_TOPBAR);
+		int modeWidth = MeasureText(modeText, FONT_SIZE_TOPBAR);
+		int modeX = WINDOW_W - modeWidth - TOPBAR_PADDING;
 
 		Color modeColor = g->inputMode == INPUT_MODE_INSERT
 			? ColorFromUInt(COLOR_TOPBAR_TEXT)
 			: ColorFromUInt(COLOR_ACCENT);
-		DrawText(modeText,
-			WINDOW_W - textWidth - TOPBAR_PADDING,
-			TOPBAR_PADDING,
-			FONT_SIZE_TOPBAR,
-			modeColor);
+		DrawText(modeText, modeX, TOPBAR_PADDING, FONT_SIZE_TOPBAR, modeColor);
 	}
 }
 
@@ -224,6 +243,19 @@ void UI_DrawBoard(const Game *g) {
 	Rectangle boardRect = BoardRect();
 
 	ThemeColors colors = CacheThemeColors(&g->theme);
+
+	/* draw pause overlay if paused */
+	if (g->paused) {
+		Color overlayColor = Fade(BLACK, 0.5f);
+		DrawRectangleRec(boardRect, overlayColor);
+
+		const char *pauseMsg = "paused";
+		int textWidth = MeasureText(pauseMsg, FONT_SIZE_TITLE);
+		int textX = boardRect.x + boardRect.width / 2 - textWidth / 2;
+		int textY = boardRect.y + boardRect.height / 2 - FONT_SIZE_TITLE / 2;
+		DrawText(pauseMsg, textX, textY, FONT_SIZE_TITLE, WHITE);
+		return; /* don't draw the actual board when paused */
+	}
 
 	DrawRectangleRec(boardRect, colors.cellBg);
 
@@ -279,7 +311,7 @@ void UI_DrawSidebar(const Game *g, const ThemeColors *colors) {
 	DrawText("controls:", x, y, FONT_SIZE_LARGE, colors->text);
 	y += CONTROLS_SECTION_SPACING;
 
-	/*  Draw control instructions */
+	/*  draw control instructions */
 	DrawText("arrows: move", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_LINE_SPACING;
 
@@ -301,7 +333,7 @@ void UI_DrawSidebar(const Game *g, const ThemeColors *colors) {
 	DrawText("esc: menu", x, y, FONT_SIZE_NORMAL, colors->text);
 	y += CONTROLS_SECTION_SPACING + 8;
 
-	/* Draw color keypad */
+	/* draw color keypad */
 	DrawText("color palette:", x, y, FONT_SIZE_LARGE, colors->text);
 	y += CONTROLS_SECTION_SPACING;
 
@@ -387,6 +419,13 @@ void UI_DrawDifficultyMenu(Game *g) {
 			"random puzzle - %s",
 			difficulties[hit]);
 
+		/* reset timer for new puzzle */
+		g->paused = false;
+		g->wasPaused = false;
+		g->elapsedSeconds = 0;
+		g->startTime = 0.0;
+		g->pauseTime = 0.0;
+
 		g->selRow = 0;
 		g->selCol = 0;
 		g->inputMode = INPUT_MODE_INSERT;
@@ -396,7 +435,7 @@ void UI_DrawDifficultyMenu(Game *g) {
 
 void UI_DrawLoadPuzzleMenu(Game *g) {
 	if (!g->puzzleListInitialized) {
-		PuzzleFileList_ScanDirectory(&g->puzzleList, ".");
+		PuzzleFileList_ScanDirectory(&g->puzzleList, "puzzles");
 		g->puzzleListInitialized = true;
 	}
 

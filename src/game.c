@@ -11,6 +11,27 @@
 #include "input.h"
 #include "puzzle_loader.h"
 
+/* timer logic for pause/play */
+static void Game_UpdateTimer(Game *g) {
+	if (!g->paused && g->wasPaused) {
+		if (g->pauseTime > 0.0) {
+			g->startTime += GetTime() - g->pauseTime;
+		}
+	}
+	else if (g->paused && !g->wasPaused) {
+		g->pauseTime = GetTime();
+	}
+	g->wasPaused = g->paused;
+
+	/* update timer if not paused */
+	if (!g->paused) {
+		if (g->startTime == 0.0) {
+			g->startTime = GetTime();
+		}
+		g->elapsedSeconds = (int) (GetTime() - g->startTime);
+	}
+}
+
 void Game_Init(Game *g) {
 	*g = (Game) { 0 };
 	g->theme = Theme_Default();
@@ -21,6 +42,13 @@ void Game_Init(Game *g) {
 	g->highlightConflicts = true;
 	g->selectedColorIndex = 0;
 	strcpy(g->puzzleTitle, "Sudoku");
+
+	/* timer state */
+	g->paused = false;
+	g->wasPaused = false;
+	g->elapsedSeconds = 0;
+	g->startTime = 0.0;
+	g->pauseTime = 0.0;
 
 	/* menu state */
 	g->menuSelection = 0;
@@ -40,6 +68,7 @@ void Game_Init(Game *g) {
 void Game_Update(Game *g) {
 	/* handle input for play screen */
 	if (g->screen == SCREEN_PLAY) {
+		Game_UpdateTimer(g);
 		Input_Update(g);
 		return;
 	}
@@ -117,6 +146,13 @@ bool Game_LoadPuzzleFile(Game *g, const char *filepath) {
 	g->selCol = 0;
 	g->inputMode = INPUT_MODE_INSERT;
 	g->screen = SCREEN_PLAY;
+
+	/* reset timer for new puzzle */
+	g->paused = false;
+	g->wasPaused = false;
+	g->elapsedSeconds = 0;
+	g->startTime = 0.0;
+	g->pauseTime = 0.0;
 
 	return true;
 }

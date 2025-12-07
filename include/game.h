@@ -33,6 +33,13 @@ typedef struct Game {
 	char puzzleTitle[MAX_PUZZLE_TITLE_GAME];
 	int selectedColorIndex; /* 0 = none, 1-9 = color palette */
 
+	/* timer state */
+	bool paused;
+	bool wasPaused; /* track previous pause state for transitions */
+	int elapsedSeconds;
+	double startTime; /* raylib timestamp when timer started */
+	double pauseTime; /* timestamp when paused, to adjust startTime on resume */
+
 	int menuSelection;
 	int difficultySelection;
 	int loadPuzzleSelection;

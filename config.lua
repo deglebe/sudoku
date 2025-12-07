@@ -4,7 +4,7 @@ config = {
 	-- application metadata
 	app = {
 		title = "sudoku",
-		version = "0.1.0"
+		version = "0.1.1"
 	},
 
 	-- grid definitions
